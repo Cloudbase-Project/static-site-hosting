@@ -90,7 +90,6 @@ func (fs *SiteService) GetSite(
 
 // Create a site in the db.
 func (fs *SiteService) CreateSite(
-	language constants.Language,
 	ownerId string,
 	projectId string,
 ) (*models.Site, error) {
@@ -113,7 +112,7 @@ func (fs *SiteService) CreateSite(
 		return nil, errors.New("static-site-hosting is disabled")
 	}
 
-	site := models.Site{Language: string(language), Config: config}
+	site := models.Site{Config: config}
 	// if err := fs.db.Create(&models.site{Code: code, Language: string(language), UserId: userId, BuildStatus: string(constants.Building)}).Error; err != nil {
 	// 	return nil, err
 	// }

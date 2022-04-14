@@ -29,7 +29,6 @@ type ImageBuilder struct {
 	Ctx       context.Context
 	Namespace string
 	SiteId    string
-	Language  constants.Language
 	ImageName string
 }
 
@@ -96,16 +95,13 @@ func (kw *KubernetesWrapper) GetDeploymentWatcher(
 func (kw *KubernetesWrapper) CreateImageBuilder(ib *ImageBuilder) (*corev1.Pod, error) {
 
 	var Dockerfile string
-	if ib.Language == constants.NODEJS {
-		Dockerfile = constants.NodejsDockerfile
+	Dockerfile = constants.Dockerfile
 
-	}
 	// else if ib.Language == constants.GOLANG {
 	// 	Dockerfile = constants.GolangDockerfile
 	// }
 
 	m1 := regexp.MustCompile(`"`)
-	packagejson := m1.ReplaceAllString(constants.NodejsPackageJSON, `\"`)
 	dockerfile := m1.ReplaceAllString(Dockerfile, `\"`)
 
 	REGISTRY := os.Getenv("REGISTRY")
@@ -131,7 +127,7 @@ func (kw *KubernetesWrapper) CreateImageBuilder(ib *ImageBuilder) (*corev1.Pod, 
 					"-c",
 					// "curl -XGET http://cloudbase-static-site-hosting-srv.default:3000/worker/queue -o /workspace/index.js && echo -e " + Dockerfile + " >> /workspace/Dockerfile && echo -e " + constants.NodejsPackageJSON + " >> /workspace/package.json && echo -e " + constants.RegistryCredentials + " >> /kaniko/.docker/config.json ",
 					// "echo -e " + ib.Code + " >> /workspace/index.js && echo -e " + Dockerfile + " >> /workspace/Dockerfile && echo -e " + constants.NodejsPackageJSON + " >> /workspace/package.json",
-					`echo -e  "` + ib.Code + `" >> /workspace/index.js && echo -e "` + dockerfile + `" >> /workspace/Dockerfile && echo -e "` + packagejson + `" >> /workspace/package.json && echo -e "{\"auths\":{\"` + REGISTRY + `\":{\"auth\": \"` + BASE64_CREDENTIALS + `\" }}}" > /kaniko/.docker/config.json`,
+					`curl -XGET http://cloudbase-static-site-hosting-srv.default:3000/worker/queue -o /workspace/build.zip && echo -e "` + dockerfile + `" >> /workspace/Dockerfile && echo -e && echo -e "{\"auths\":{\"` + REGISTRY + `\":{\"auth\": \"` + BASE64_CREDENTIALS + `\" }}}" > /kaniko/.docker/config.json`,
 				},
 				VolumeMounts: []corev1.VolumeMount{{
 					Name:      "shared",

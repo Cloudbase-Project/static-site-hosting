@@ -17,7 +17,6 @@ type Site struct {
 	CreatedAt        time.Time      `                                                       json:"-"` // auto populated by gorm
 	UpdatedAt        time.Time      `                                                       json:"-"` // auto populated by gorm
 	DeletedAt        gorm.DeletedAt `gorm:"index"                                           json:"-"` // auto populated by gorm
-	Language         string         `                                                       json:"language"`
 	BuildStatus      string         `gorm:"default:'NotBuilt'"                              json:"buildStatus"`
 	BuildFailReason  string         `                                                       json:"buildFailReason"`
 	DeployStatus     string         `gorm:"default:'NotDeployed'"                           json:"deployStatus"`
