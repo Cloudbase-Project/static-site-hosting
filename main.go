@@ -72,42 +72,42 @@ func main() {
 
 	db.AutoMigrate(&models.Site{}, &models.Config{})
 
-	ss := services.NewSitesService(db, logger)
+	ss := services.NewSiteService(db, logger)
 	cs := services.NewConfigService(db, logger)
 	ps := services.NewProxyService(db, logger)
 
-	sites := handlers.NewSiteHandler(clientset, logger, sites)
+	site := handlers.NewSiteHandler(clientset, logger, ss)
 	configHandler := handlers.NewConfigHandler(logger, cs)
 	proxyHandler := handlers.NewProxyHandler(logger, ps)
 	// add site
-	router.HandleFunc("/site/{projectId}", middlewares.AuthMiddleware(site.Createsite)).
+	router.HandleFunc("/site/{projectId}", middlewares.AuthMiddleware(site.CreateSite)).
 		Methods(http.MethodPost)
 
 	// list sites created by the user
-	router.HandleFunc("/sites/{projectId}", middlewares.AuthMiddleware(site.Listsites)).
+	router.HandleFunc("/sites/{projectId}", middlewares.AuthMiddleware(site.ListSites)).
 		Methods(http.MethodGet)
 
 	// update site
-	router.HandleFunc("/site/{projectId}/{siteId}/", middlewares.AuthMiddleware(site.Updatesite)).
+	router.HandleFunc("/site/{projectId}/{siteId}/", middlewares.AuthMiddleware(site.UpdateSite)).
 		Methods(http.MethodPatch)
 
 	// delete site
-	router.HandleFunc("/site/{projectId}/{siteId}", middlewares.AuthMiddleware(site.Deletesite)).
+	router.HandleFunc("/site/{projectId}/{siteId}", middlewares.AuthMiddleware(site.DeleteSite)).
 		Methods(http.MethodDelete)
 
 	// View a site. View status/replicas RPS etc
-	router.HandleFunc("/site/{projectId}/{siteId}", middlewares.AuthMiddleware(site.Getsite)).
+	router.HandleFunc("/site/{projectId}/{siteId}", middlewares.AuthMiddleware(site.GetSite)).
 		Methods(http.MethodGet)
 
 	// Get logs of a site
-	router.HandleFunc("/site/{projectId}/{siteId}/logs", middlewares.AuthMiddleware(site.GetsiteLogs)).
+	router.HandleFunc("/site/{projectId}/{siteId}/logs", middlewares.AuthMiddleware(site.GetSiteLogs)).
 		Methods(http.MethodGet)
 
 	// Create site creates site image. User has to deploy/redeploy for deployments to take effect.
-	router.HandleFunc("/site/{projectId}/{siteId}/deploy", middlewares.AuthMiddleware(site.Deploysite)).
+	router.HandleFunc("/site/{projectId}/{siteId}/deploy", middlewares.AuthMiddleware(site.DeploySite)).
 		Methods(http.MethodPost)
 
-	router.HandleFunc("/site/{projectId}/{siteId}/redeploy", middlewares.AuthMiddleware(site.Redeploysite)).
+	router.HandleFunc("/site/{projectId}/{siteId}/redeploy", middlewares.AuthMiddleware(site.RedeploySite)).
 		Methods(http.MethodPost)
 
 		// ------------------ CONFIG ROUTES
