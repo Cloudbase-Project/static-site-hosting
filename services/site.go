@@ -75,7 +75,7 @@ func (fs *SiteService) GetSite(
 		return nil, errors.New("Invalid projectId")
 	}
 	if !config.Enabled {
-		return nil, errors.New("Serverless is disabled")
+		return nil, errors.New("static-site-hosting is disabled")
 	}
 
 	if err := fs.db.First(&site, "id = ?", siteId).Error; err != nil {
@@ -110,7 +110,7 @@ func (fs *SiteService) CreateSite(
 		return nil, errors.New("Invalid projectId")
 	}
 	if !config.Enabled {
-		return nil, errors.New("Serverless is disabled")
+		return nil, errors.New("static-site-hosting is disabled")
 	}
 
 	site := models.Site{Language: string(language), Config: config}
@@ -140,7 +140,7 @@ func (fs *SiteService) DeleteSite(siteId string, ownerId string, projectId strin
 		return errors.New("Invalid projectId")
 	}
 	if !config.Enabled {
-		return errors.New("Serverless is disabled")
+		return errors.New("static-site-hosting is disabled")
 	}
 
 	if err := fs.db.Where("id = ?", siteId).Delete(&models.Site{}).Error; err != nil {

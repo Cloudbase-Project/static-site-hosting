@@ -96,7 +96,6 @@ func (f *SiteHandler) UpdateSite(rw http.ResponseWriter, r *http.Request) {
 
 	}
 
-	// update the code.
 	// site.Code = data.Code
 	site.BuildStatus = string(constants.Building)
 	// save it
@@ -284,7 +283,6 @@ func (f *SiteHandler) CreateSite(rw http.ResponseWriter, r *http.Request) {
 
 	// TODO: 1. authenicate and get userId
 	// TODO: 2. check if the service is enabled
-	// TODO: 3. save code to db
 
 	var data *dtos.PostCodeDTO
 	utils.FromJSON(r.Body, &data)
