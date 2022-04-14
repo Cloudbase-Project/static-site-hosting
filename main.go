@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -26,6 +27,9 @@ import (
 func main() {
 
 	logger := log.New(os.Stdout, "STATIC_SITE_HOSTING ", log.LstdFlags)
+
+	fileQueue := []string{}
+	mu := sync.Mutex{}
 
 	err := godotenv.Load()
 	if err != nil {
@@ -76,7 +80,7 @@ func main() {
 	cs := services.NewConfigService(db, logger)
 	ps := services.NewProxyService(db, logger)
 
-	site := handlers.NewSiteHandler(clientset, logger, ss)
+	site := handlers.NewSiteHandler(clientset, logger, ss, &mu, &fileQueue)
 	configHandler := handlers.NewConfigHandler(logger, cs)
 	proxyHandler := handlers.NewProxyHandler(logger, ps)
 	// add site
@@ -114,6 +118,8 @@ func main() {
 	router.HandleFunc("/config/", configHandler.CreateConfig).Methods(http.MethodPost)
 
 	router.HandleFunc("/serve/{siteId}", proxyHandler.ProxyRequest).Methods(http.MethodGet)
+
+	router.HandleFunc("/worker/queue/", site.GetFromQueue).Methods(http.MethodGet)
 
 	server := http.Server{
 		Addr:    ":" + PORT,

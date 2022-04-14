@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	kuberneteswrapper "github.com/Cloudbase-Project/static-site-hosting/KubernetesWrapper"
 	"github.com/Cloudbase-Project/static-site-hosting/constants"
@@ -23,6 +25,8 @@ type SiteHandler struct {
 	l       *log.Logger
 	service *services.SiteService
 	kw      *kuberneteswrapper.KubernetesWrapper
+	mu      *sync.Mutex
+	fq      *[]string
 }
 
 // create new site
@@ -30,9 +34,11 @@ func NewSiteHandler(
 	client *kubernetes.Clientset,
 	l *log.Logger,
 	s *services.SiteService,
+	mu *sync.Mutex,
+	fq *[]string,
 ) *SiteHandler {
 	kw := kuberneteswrapper.NewWrapper(client)
-	return &SiteHandler{l: l, service: s, kw: kw}
+	return &SiteHandler{l: l, service: s, kw: kw, mu: mu, fq: fq}
 }
 
 // Get all sites created by this user.
@@ -279,17 +285,32 @@ func (f *SiteHandler) DeploySite(rw http.ResponseWriter, r *http.Request) {
 
 }
 
+func (f *SiteHandler) GetFromQueue(rw http.ResponseWriter, r *http.Request) {
+	f.mu.Lock()
+	// *f.fq = append(*f.fq, site.ID.String())
+	var fileString string
+	fileString, *f.fq = (*f.fq)[0], (*f.fq)[1:]
+	f.mu.Unlock()
+	http.ServeFile(rw, r, "./zipfiles/"+fileString+".zip")
+}
+
 func (f *SiteHandler) CreateSite(rw http.ResponseWriter, r *http.Request) {
 
 	// TODO: 1. authenicate and get userId
 	// TODO: 2. check if the service is enabled
 
-	var data *dtos.PostCodeDTO
-	utils.FromJSON(r.Body, &data)
-	if _, err := dtos.Validate(data); err != nil {
-		http.Error(rw, "Validation error : "+err.Error(), 400)
+	// FILE UPLOAD HANDLING
+	r.ParseMultipartForm(10 << 20)
+	file, handler, err := r.FormFile("myFile")
+	if err != nil {
+		fmt.Println("Error Retrieving the File")
+		fmt.Println(err)
 		return
 	}
+	defer file.Close()
+	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
+	fmt.Printf("File Size: %+v\n", handler.Size)
+	fmt.Printf("MIME Header: %+v\n", handler.Header)
 
 	ownerId := r.Context().Value("ownerId").(string)
 
@@ -298,12 +319,32 @@ func (f *SiteHandler) CreateSite(rw http.ResponseWriter, r *http.Request) {
 
 	// Commit to db
 	// TODO:
-	site, err := f.service.CreateSite(data.Language, ownerId, projectId)
+	site, err := f.service.CreateSite(ownerId, projectId)
 	if err != nil {
 		http.Error(rw, "DB error", 500)
 	}
 	fmt.Printf("site: %v\n", site)
 
+	tempFile, err := ioutil.TempFile("zipfiles", site.ID.String()+".zip")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer tempFile.Close()
+
+	// read all of the contents of our uploaded file into a
+	// byte array
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	// write this byte array to our temporary file
+	tempFile.Write(fileBytes)
+	// return that we have successfully uploaded our file!
+	fmt.Fprintf(rw, "Successfully Uploaded File\n")
+
+	f.mu.Lock()
+	*f.fq = append(*f.fq, site.ID.String())
+	f.mu.Unlock()
 	// if err != nil {
 	// 	http.Error(rw, "cannot read json", 400)
 	// }
@@ -331,7 +372,6 @@ func (f *SiteHandler) CreateSite(rw http.ResponseWriter, r *http.Request) {
 			Ctx:       r.Context(),
 			Namespace: constants.Namespace,
 			SiteId:    site.ID.String(),
-			Language:  constants.Language(site.Language),
 			ImageName: imageName,
 		})
 
