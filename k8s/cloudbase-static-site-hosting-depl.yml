@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-    name: cloudbase-static-site-hosting-svc
+    name: cloudbase-ssh-svc
 spec:
     selector:
-        app: cloudbase-static-site-hosting-depl
+        app: cloudbase-ssh-depl
     type: ClusterIP
     ports:
         - port: 4000
@@ -50,20 +50,20 @@ subjects:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: cloudbase-static-site-hosting-depl
+    name: cloudbase-ssh-depl
 spec:
     selector:
         matchLabels:
-            app: cloudbase-static-site-hosting-depl
+            app: cloudbase-ssh-depl
     template:
         metadata:
             labels:
-                app: cloudbase-static-site-hosting-depl
+                app: cloudbase-ssh-depl
         spec:
             serviceAccountName: everything-sa
             containers:
-                - name: cloudbase-static-site-hosting-depl
-                  image: vnavaneeth/cloudbase-static-site-hosting
+                - name: cloudbase-ssh-depl
+                  image: vnavaneeth/cloudbase-ssh
                   imagePullPolicy: 'Never'
                   # resources:
                   # limits:

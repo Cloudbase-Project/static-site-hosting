@@ -27,7 +27,7 @@ func FromJSON(body io.Reader, value interface{}) interface{} {
 //
 // eg: 127319ey71e291y2e12e01u-srv
 func BuildServiceName(siteId string) string {
-	return "cloudbase-static-site-hosting-" + siteId + "-srv"
+	return "cloudbase-ssh-" + siteId + "-svc"
 }
 
 // set http headers

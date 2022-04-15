@@ -1,12 +1,12 @@
 apiVersion: skaffold/v2alpha3
 kind: Config
 metadata:
-    name: 'cloudbase-static-site-hosting'
+    name: 'cloudbase-ssh'
 build:
     local:
         push: false
     artifacts:
-        - image: vnavaneeth/cloudbase-static-site-hosting
+        - image: vnavaneeth/cloudbase-ssh
           context: ./
           docker:
               dockerfile: Dockerfile
@@ -24,4 +24,4 @@ deploy:
     kubectl:
         manifests:
             - ./k8s/*.yml
-            - ../frontend/k8s/ingress-svc.yml
+            - ../cloudbase-main/k8s/ingress-svc.yml

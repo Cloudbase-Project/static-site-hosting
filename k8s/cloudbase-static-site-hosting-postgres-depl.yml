@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: cloudbase-static-site-hosting-postgres-depl
+    name: cloudbase-ssh-postgres-depl
 spec:
     selector:
         matchLabels:
-            app: cloudbase-static-site-hosting-postgres-depl
+            app: cloudbase-ssh-postgres-depl
     template:
         metadata:
             labels:
-                app: cloudbase-static-site-hosting-postgres-depl
+                app: cloudbase-ssh-postgres-depl
         spec:
             containers:
-                - name: cloudbase-static-site-hosting-postgres-depl
+                - name: cloudbase-ssh-postgres-depl
                   image: vnavaneeth/static-site-hosting-postgres
                   #   image: postgres:10.1
                   ports:
@@ -24,7 +24,7 @@ spec:
                         value: cloudbase
                       - name: POSTGRES_PASSWORD
                         value: cloudbase
-                  resources:
+                #   resources:
                 # limits:
                 #   memory: '128Mi'
                 #   cpu: '500m'
@@ -33,10 +33,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-    name: cloudbase-static-site-hosting-postgres-svc
+    name: cloudbase-ssh-postgres-svc
 spec:
     selector:
-        app: cloudbase-static-site-hosting-postgres-depl
+        app: cloudbase-ssh-postgres-depl
     type: ClusterIP
     ports:
         - port: 5432
