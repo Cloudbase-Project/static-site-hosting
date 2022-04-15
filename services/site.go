@@ -287,6 +287,7 @@ func (fs *SiteService) WatchImageBuilder(
 			case corev1.PodFailed:
 				// TODO: Commit status to DB with message
 				fmt.Println("Image build failed. Reason : ", p.Status.Message)
+				fmt.Println("failure : ", p)
 				dataChan <- WatchResult{Status: string(constants.BuildFailed), Reason: p.Status.Message, Err: nil}
 				podWatch.Stop()
 				break

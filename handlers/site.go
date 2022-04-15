@@ -289,9 +289,36 @@ func (f *SiteHandler) GetFromQueue(rw http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
 	// *f.fq = append(*f.fq, site.ID.String())
 	var fileString string
-	fileString, *f.fq = (*f.fq)[0], (*f.fq)[1:]
+	fmt.Println("QUEUE : ", *f.fq)
+	// fileString, *f.fq = (*f.fq)[0], (*f.fq)[1:]
+	fileString = (*f.fq)[0]
+
 	f.mu.Unlock()
-	http.ServeFile(rw, r, "./zipfiles/"+fileString+".zip")
+	http.ServeFile(rw, r, "./zipfiles/"+fileString)
+}
+
+func (f *SiteHandler) GetFileName(rw http.ResponseWriter, r *http.Request) {
+	ownerId := r.Context().Value("ownerId").(string)
+
+	vars := mux.Vars(r)
+	projectId := vars["projectId"]
+
+	site, err := f.service.CreateSite(ownerId, projectId)
+	if err != nil {
+		http.Error(rw, "DB error", 500)
+	}
+	fmt.Printf("site: %v\n", site)
+
+	resp := struct {
+		Site    models.Site
+		Message string
+	}{
+		Site:    *site,
+		Message: "This is the id for the file name. Use it as the homepage name in package.json -> https://backend.cloudbase.dev/static-site-hosting/serve/" + site.ID.String() + "/ ",
+	}
+
+	json.NewEncoder(rw).Encode(resp)
+
 }
 
 func (f *SiteHandler) CreateSite(rw http.ResponseWriter, r *http.Request) {
@@ -316,20 +343,17 @@ func (f *SiteHandler) CreateSite(rw http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	projectId := vars["projectId"]
+	siteId := vars["siteId"]
 
 	// Commit to db
 	// TODO:
-	site, err := f.service.CreateSite(ownerId, projectId)
+	site, err := f.service.GetSite(siteId, ownerId, projectId)
 	if err != nil {
 		http.Error(rw, "DB error", 500)
 	}
 	fmt.Printf("site: %v\n", site)
 
-	tempFile, err := ioutil.TempFile("zipfiles", site.ID.String()+".zip")
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer tempFile.Close()
+	// defer tempFile.Close()
 
 	// read all of the contents of our uploaded file into a
 	// byte array
@@ -338,12 +362,18 @@ func (f *SiteHandler) CreateSite(rw http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 	// write this byte array to our temporary file
-	tempFile.Write(fileBytes)
+	// tempFile.Write(fileBytes)
+
+	err = ioutil.WriteFile("./zipfiles/"+site.ID.String()+".zip", fileBytes, 0777)
+	if err != nil {
+		fmt.Println(err)
+	}
 	// return that we have successfully uploaded our file!
 	fmt.Fprintf(rw, "Successfully Uploaded File\n")
 
 	f.mu.Lock()
-	*f.fq = append(*f.fq, site.ID.String())
+	// *f.fq = append(*f.fq, site.ID.String())
+	*f.fq = append(*f.fq, site.ID.String()+".zip")
 	f.mu.Unlock()
 	// if err != nil {
 	// 	http.Error(rw, "cannot read json", 400)
