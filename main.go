@@ -83,8 +83,12 @@ func main() {
 	site := handlers.NewSiteHandler(clientset, logger, ss, &mu, &fileQueue)
 	configHandler := handlers.NewConfigHandler(logger, cs)
 	proxyHandler := handlers.NewProxyHandler(logger, ps)
+
+	router.HandleFunc("/site/{projectId}/create", middlewares.AuthMiddleware(site.GetFileName)).
+		Methods(http.MethodPost)
+
 	// add site
-	router.HandleFunc("/site/{projectId}", middlewares.AuthMiddleware(site.CreateSite)).
+	router.HandleFunc("/site/{projectId}/{siteId}/", middlewares.AuthMiddleware(site.CreateSite)).
 		Methods(http.MethodPost)
 
 	// list sites created by the user
@@ -117,7 +121,8 @@ func main() {
 		// ------------------ CONFIG ROUTES
 	router.HandleFunc("/config/", configHandler.CreateConfig).Methods(http.MethodPost)
 
-	router.HandleFunc("/serve/{siteId}", proxyHandler.ProxyRequest).Methods(http.MethodGet)
+	// router.HandleFunc("/serve/{siteId}", proxyHandler.ProxyRequest).Methods(http.MethodGet)
+	router.PathPrefix("/serve/{siteId}/").HandlerFunc(proxyHandler.ProxyRequest)
 
 	router.HandleFunc("/worker/queue/", site.GetFromQueue).Methods(http.MethodGet)
 
