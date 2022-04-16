@@ -16,3 +16,6 @@ k8s-run:
 
 k8s-dev:
 	skaffold dev
+
+k8s-delete:
+	skaffold delete
