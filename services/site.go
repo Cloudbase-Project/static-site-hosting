@@ -39,9 +39,9 @@ func NewSiteService(db *gorm.DB, l *log.Logger) *SiteService {
 func (fs *SiteService) GetAllSites(
 	ownerId string,
 	projectId string,
-) (*models.Site, error) {
+) (*models.Sites, error) {
 
-	var site models.Site
+	var sites models.Sites
 	var config models.Config
 	// result := fs.db.Where("owner = ? AND projectId = ?", ownerId, projectId).First(&config)
 	result := fs.db.Where(&models.Config{Owner: ownerId, ProjectId: projectId}).First(&config)
@@ -53,11 +53,11 @@ func (fs *SiteService) GetAllSites(
 		return nil, errors.New("static-site-hosting is disabled")
 	}
 
-	if err := fs.db.Where("ConfigID = ?").Find(&site).Error; err != nil {
+	if err := fs.db.Where(&models.Site{ConfigID: config.ID}).Find(&sites).Error; err != nil {
 		return nil, err
 	}
 
-	return &site, nil
+	return &sites, nil
 }
 
 func (fs *SiteService) GetSite(
