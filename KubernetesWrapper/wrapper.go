@@ -2,7 +2,6 @@ package kuberneteswrapper
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"regexp"
 	"time"
@@ -75,8 +74,6 @@ func (kw *KubernetesWrapper) GetImageBuilderWatcher(
 	return kw.KClient.CoreV1().
 		Pods(constants.Namespace).
 		Watch(
-			// TODO: Donno if the request context should be used here or a custom timeout context should be used here.
-			// r.Context(),
 			ctx,
 			metav1.ListOptions{LabelSelector: label})
 }
@@ -96,10 +93,6 @@ func (kw *KubernetesWrapper) CreateImageBuilder(ib *ImageBuilder) (*corev1.Pod, 
 
 	var Dockerfile string
 	Dockerfile = constants.Dockerfile
-
-	// else if ib.Language == constants.GOLANG {
-	// 	Dockerfile = constants.GolangDockerfile
-	// }
 
 	m1 := regexp.MustCompile(`"`)
 	dockerfile := m1.ReplaceAllString(Dockerfile, `\"`)
@@ -125,9 +118,6 @@ func (kw *KubernetesWrapper) CreateImageBuilder(ib *ImageBuilder) (*corev1.Pod, 
 				Command: []string{
 					"/bin/sh",
 					"-c",
-					// "curl -XGET http://cloudbase-static-site-hosting-srv.default:3000/worker/queue -o /workspace/index.js && echo -e " + Dockerfile + " >> /workspace/Dockerfile && echo -e " + constants.NodejsPackageJSON + " >> /workspace/package.json && echo -e " + constants.RegistryCredentials + " >> /kaniko/.docker/config.json ",
-					// "echo -e " + ib.Code + " >> /workspace/index.js && echo -e " + Dockerfile + " >> /workspace/Dockerfile && echo -e " + constants.NodejsPackageJSON + " >> /workspace/package.json",
-					// `curl -XGET http://cloudbase-static-site-hosting-svc:4000/worker/queue -o /workspace/build.zip && ls -lash && echo -e "` + dockerfile + `" >> /workspace/Dockerfile && echo -e && echo -e "{\"auths\":{\"` + REGISTRY + `\":{\"auth\": \"` + BASE64_CREDENTIALS + `\" }}}" > /kaniko/.docker/config.json`,
 					`wget -O /workspace/build.zip http://cloudbase-ssh-svc:4000/worker/queue/ && ls -lash && echo -e "` + dockerfile + `" >> /workspace/Dockerfile && echo -e && echo -e "{\"auths\":{\"` + REGISTRY + `\":{\"auth\": \"` + BASE64_CREDENTIALS + `\" }}}" > /kaniko/.docker/config.json`,
 				},
 				VolumeMounts: []corev1.VolumeMount{{
@@ -144,7 +134,6 @@ func (kw *KubernetesWrapper) CreateImageBuilder(ib *ImageBuilder) (*corev1.Pod, 
 				Args: []string{
 					"--dockerfile=/workspace/Dockerfile",
 					"--context=dir:///workspace",
-					// "--no-push",
 					"--destination=" + ib.ImageName,
 				},
 				VolumeMounts: []corev1.VolumeMount{{
@@ -162,19 +151,9 @@ func (kw *KubernetesWrapper) CreateImageBuilder(ib *ImageBuilder) (*corev1.Pod, 
 				{
 					Name: "dockerconfig", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
 				},
-				// {Name: "dockerconfig",
-				// 	VolumeSource: corev1.VolumeSource{
-				// 		Secret: &corev1.SecretVolumeSource{
-				// 			SecretName: "regcred",
-				// 			Items: []corev1.KeyToPath{
-				// 				{Key: ".dockerconfigjson", Path: "config.json"},
-				// 			},
-				// 		},
-				// 	}},
 			},
 		},
 	}, metav1.CreateOptions{})
-	fmt.Printf("err: %v\n", err)
 	return pod, err
 }
 
@@ -195,14 +174,12 @@ func (kw *KubernetesWrapper) CreateDeployment(options *DeploymentOptions) (*v1.D
 		Create(options.Ctx,
 			&v1.Deployment{
 				TypeMeta: metav1.TypeMeta{Kind: "Deployment", APIVersion: "apps/v1"},
-				// TODO:
 				ObjectMeta: metav1.ObjectMeta{
 					Name:   options.SiteId,
 					Labels: map[string]string{"app": options.SiteId},
 				},
 				Spec: v1.DeploymentSpec{
 					Selector: &metav1.LabelSelector{
-						// TODO:
 						MatchLabels: options.DeploymentLabel,
 					},
 					Replicas: &options.Replicas, // TODO: Have to do more here
@@ -211,7 +188,6 @@ func (kw *KubernetesWrapper) CreateDeployment(options *DeploymentOptions) (*v1.D
 						Spec: corev1.PodSpec{
 							RestartPolicy: corev1.RestartPolicyAlways,
 							Containers: []corev1.Container{{
-								// TODO:
 								Name:  options.SiteId,
 								Image: options.ImageName, // "image name from db", // should be ghcr.io/projectname/siteId:latest
 								Ports: []corev1.ContainerPort{{ContainerPort: 3000}},

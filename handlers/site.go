@@ -102,7 +102,6 @@ func (f *SiteHandler) UpdateSite(rw http.ResponseWriter, r *http.Request) {
 
 	}
 
-	// site.Code = data.Code
 	site.BuildStatus = string(constants.Building)
 	// save it
 	f.service.SaveSite(site)
@@ -121,7 +120,6 @@ func (f *SiteHandler) UpdateSite(rw http.ResponseWriter, r *http.Request) {
 
 	result := f.service.WatchImageBuilder(f.kw, site, constants.Namespace)
 	if result.Err != nil {
-		// http.Error(rw, "Error watching image builder", 500)
 		f.l.Print("error watching image builder", result.Err)
 	}
 
@@ -255,7 +253,6 @@ func (f *SiteHandler) DeploySite(rw http.ResponseWriter, r *http.Request) {
 		site.DeployStatus = string(constants.Deploying)
 		f.service.SaveSite(site)
 
-		// rw.Write([]byte("Deploying your site..."))
 		rw = utils.SetSSEHeaders(rw)
 		fmt.Fprintf(rw, "data: %v\n\n", "Deploying your site...")
 
@@ -287,10 +284,7 @@ func (f *SiteHandler) DeploySite(rw http.ResponseWriter, r *http.Request) {
 
 func (f *SiteHandler) GetFromQueue(rw http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
-	// *f.fq = append(*f.fq, site.ID.String())
 	var fileString string
-	fmt.Println("QUEUE : ", *f.fq)
-	// fileString, *f.fq = (*f.fq)[0], (*f.fq)[1:]
 	fileString = (*f.fq)[0]
 
 	f.mu.Unlock()
@@ -351,9 +345,6 @@ func (f *SiteHandler) CreateSite(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(rw, "DB error", 500)
 	}
-	fmt.Printf("site: %v\n", site)
-
-	// defer tempFile.Close()
 
 	// read all of the contents of our uploaded file into a
 	// byte array
@@ -372,21 +363,14 @@ func (f *SiteHandler) CreateSite(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(rw, "Successfully Uploaded File\n")
 
 	f.mu.Lock()
-	// *f.fq = append(*f.fq, site.ID.String())
 	*f.fq = append(*f.fq, site.ID.String()+".zip")
 	f.mu.Unlock()
-	// if err != nil {
-	// 	http.Error(rw, "cannot read json", 400)
-	// }
 
 	// TODO: get these from env variables
 	Registry := os.Getenv("REGISTRY")
 	Project := os.Getenv("PROJECT_NAME")
 
 	imageName := Registry + "/" + Project + "/" + site.ID.String() + ":latest"
-	// imageName := Registry + "/" + Project + "/" + "test1" + ":latest"
-	fmt.Printf("imageName: %v\n", imageName)
-	// _, err := f.kw.CreateNamespace(r.Context(), constants.Namespace)
 
 	// create namespace if not exist
 	if err != nil {
@@ -406,14 +390,11 @@ func (f *SiteHandler) CreateSite(rw http.ResponseWriter, r *http.Request) {
 		})
 
 	if err != nil {
-		http.Error(rw, "erroror : "+err.Error(), 400)
+		http.Error(rw, "error : "+err.Error(), 400)
 	}
-
-	// podLogs = clientset.CoreV1().Pods("static-site-hosting").GetLogs("kaniko-worker", &v1.PodLogOptions{})
 
 	rw = utils.SetSSEHeaders(rw)
 
-	// rw.Write([]byte("Building Image for your code"))
 	fmt.Fprintf(rw, "data: %v\n\n", "Building Image for your code")
 
 	if f, ok := rw.(http.Flusher); ok {

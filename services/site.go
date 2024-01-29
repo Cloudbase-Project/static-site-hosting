@@ -43,7 +43,6 @@ func (fs *SiteService) GetAllSites(
 
 	var sites models.Sites
 	var config models.Config
-	// result := fs.db.Where("owner = ? AND projectId = ?", ownerId, projectId).First(&config)
 	result := fs.db.Where(&models.Config{Owner: ownerId, ProjectId: projectId}).First(&config)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -68,7 +67,6 @@ func (fs *SiteService) GetSite(
 	var site models.Site
 	var config models.Config
 
-	// result := fs.db.Where("owner = ? AND projectId = ?", ownerId, projectId).First(&config)
 	result := fs.db.Where(&models.Config{Owner: ownerId, ProjectId: projectId}).First(&config)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -102,7 +100,6 @@ func (fs *SiteService) CreateSite(
 	fmt.Printf("configs.owner: %v\n", configs[0].Owner)
 	fmt.Printf("configs.projectid: %v\n", configs[0].ProjectId)
 
-	// result := fs.db.Where("owner = ?", ownerId, projectId).First(&config)
 	result := fs.db.Where(&models.Config{Owner: ownerId, ProjectId: projectId}).First(&config)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -113,9 +110,6 @@ func (fs *SiteService) CreateSite(
 	}
 
 	site := models.Site{Config: config}
-	// if err := fs.db.Create(&models.site{Code: code, Language: string(language), UserId: userId, BuildStatus: string(constants.Building)}).Error; err != nil {
-	// 	return nil, err
-	// }
 
 	fs.db.Create(&site)
 
@@ -132,7 +126,6 @@ func (fs *SiteService) DeleteSite(siteId string, ownerId string, projectId strin
 
 	var config models.Config
 
-	// result := fs.db.Where("owner = ? AND projectId = ?", ownerId, projectId).First(&config)
 	result := fs.db.Where(&models.Config{Owner: ownerId, ProjectId: projectId}).First(&config)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -280,14 +273,12 @@ func (fs *SiteService) WatchImageBuilder(
 			switch p.Status.Phase {
 			case corev1.PodSucceeded:
 				// TODO: Commit status to DB
-				fmt.Println("image build success. pushed to db")
 				dataChan <- WatchResult{Status: string(constants.BuildSuccess), Reason: p.Status.Message, Err: nil}
 				podWatch.Stop()
 				break
 			case corev1.PodFailed:
 				// TODO: Commit status to DB with message
 				fmt.Println("Image build failed. Reason : ", p.Status.Message)
-				fmt.Println("failure : ", p)
 				dataChan <- WatchResult{Status: string(constants.BuildFailed), Reason: p.Status.Message, Err: nil}
 				podWatch.Stop()
 				break
@@ -351,10 +342,6 @@ func (fs *SiteService) GetDeploymentLogs(
 		Pods(namespace).
 		List(ctx, metav1.ListOptions{LabelSelector: label.String()})
 
-	// req := kw.KClient.CoreV1().Pods(namespace).
-	// 	// GetLogs("deployment/"+deploymentName, &v1.PodLogOptions{Follow: follow})
-	// 	GetLogs("fa1f1dbf-aff3-424c-848a-68303a541ad3-7c94c475d9-l2652", &v1.PodLogOptions{Follow: false})
-
 	var requests []struct {
 		Request *rest.Request
 		PodName string
@@ -402,8 +389,6 @@ func (fs *SiteService) GetDeploymentLogs(
 		}(request.Request, request.PodName)
 	}
 	wg.Wait()
-	// podLogs, err := req.Stream(ctx)
-	// l := req.Do(ctx)
 	return err
 }
 
